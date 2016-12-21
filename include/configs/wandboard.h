@@ -89,7 +89,7 @@
 #endif
 
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-#define CONFIG_EXTRA_ENV_SETTINGS \
+#define COMMON_EXTRA_ENV_SETTINGS \
 	"console=ttymxc0,115200\0" \
 	"splashpos=m,m\0" \
 	"fdtfile=undefined\0" \
@@ -99,6 +99,7 @@
 	"fdt_addr=0x18000000\0" \
 	"ip_dyn=yes\0" \
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
+	"mmcpart=1\0" \
 	"update_sd_firmware_filename=u-boot.imx\0" \
 	"update_sd_firmware=" \
 		"if test ${ip_dyn} = yes; then " \
@@ -113,6 +114,17 @@
 				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
 			"fi; "	\
 		"fi\0" \
+	"bootcmd_mmc=" \
+		"ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} /boot/fitImage-initramfs.bin;" \
+		"bootm ${loadaddr}\0"
+
+#ifdef CONFIG_SECURE_BOOT
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	COMMON_EXTRA_ENV_SETTINGS
+#define CONFIG_BOOTCOMMAND "run bootcmd_mmc"
+#else
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	COMMON_EXTRA_ENV_SETTINGS \
 	"findfdt="\
 		"if test $board_name = C1 && test $board_rev = MX6Q ; then " \
 			"setenv fdtfile imx6q-wandboard.dtb; fi; " \
@@ -143,6 +155,7 @@
 	   "run distro_bootcmd"
 
 #include <config_distro_bootcmd.h>
+#endif /* CONFIG_SECURE_BOOT */
 
 /* Physical Memory Map */
 #define CONFIG_NR_DRAM_BANKS		1
@@ -160,8 +173,11 @@
 /* Environment organization */
 #define CONFIG_ENV_SIZE			(8 * 1024)
 
+#ifdef CONFIG_SECURE_BOOT
+#define CONFIG_ENV_IS_NOWHERE
+#else
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_ENV_OFFSET		(768 * 1024)
+#endif
 #define CONFIG_SYS_MMC_ENV_DEV		0
-
 #endif			       /* __CONFIG_H * */
